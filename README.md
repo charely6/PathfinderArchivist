@@ -9,7 +9,6 @@ to account for punctuation in spell names and the like
 ---
 
 #TODO
-- modify to use the D20PRSRD sheet
 - create a multi leveled Table of Contents sorting them by Class list and level
 - add support for simple printable PDFs (starting with epub for use with nooks and kindles)
 - create dialog that allows search and selection of spells to be put into the book
