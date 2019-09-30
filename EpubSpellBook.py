@@ -1,4 +1,4 @@
-import gspread
+import requests
 import pprint
 import locale
 from ebooklib import epub
@@ -13,14 +13,14 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import timeit
 import pprint
-def hasNumbers(inputString):
-    return any(char.isdigit() for char in inputString)
-
+from io import StringIO
+import pandas as pd
 
 def title(val):
 	return val.title
 def titleX(val):
 	return val.title()
+
 def first(val):
 	return val[0]
 	
@@ -33,6 +33,23 @@ def SpellNameFix(Name,List):
 		x=process.extractOne(Name,List)
 		return x[0]
 
+# use creds to create a client to interact with the Google Drive API
+
+pathtoCsv = r'https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv'
+df = pd.read_csv(pathtoCsv, encoding = 'utf8')
+
+list_of_rows = df.values.tolist()
+
+list_of_spell_Names = df.loc[:,'name'].values.tolist()
+
+book = epub.EpubBook()
+
+# set metadata
+book.set_identifier('id123456')
+book.set_title('SpellBookTest')
+book.set_language('en')
+
+book.add_author('EpubSpellBook')
 
 
 root = Tk()
@@ -53,34 +70,6 @@ with open(filepath,'r') as f:
 				SpellList.append(x.title())
 for spell in SpellList:
 	print(spell.title())
-# use creds to create a client to interact with the Google Drive API
-scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('EpubSpellBook.json', scope)
-client = gspread.authorize(creds)
-
-# Find a workbook by name and open the first sheet
-# Make sure you use the right name here.
-sheet = client.open('PathfinderSpells').sheet1
-
-# Extract and print all of the values
-list_of_rows = sheet.get_all_values()
-#list_of_rows.sort(key = first)
-#list_of_spell_Names = []
-list_of_spell_Names = sheet.col_values(1)
-#for x in list_of_rows:
-#	list_of_spell_Names.append(x[0])
-
-
-book = epub.EpubBook()
-
-# set metadata
-book.set_identifier('id123456')
-book.set_title('SpellBookTest')
-book.set_language('en')
-
-book.add_author('EpubSpellBook')
-
 chapters = []
 ClassSections = []
 classes = ['Sorcerer', 'Wizard', 'Cleric', 'Druid', 'Ranger', 'Bard', 'Paladin', 'Alchemist', 'Summoner', 'Witch', 'Inquisitor', 'Oracle', 'Antipaladin', 'Magus', 'adept']
@@ -224,7 +213,7 @@ for x in list_of_rows:
 	cl.add_item(default_css)
 	#print(x[0])
 	for idx, y in enumerate(ClassSections):
-		if hasNumbers(x[idx+26]):
+		if x[idx+26]>0:
 			y[1].append(epub.Link(x[0]+'.xhtml',x[0],x[0]))
 			
 	chapters.append(cl)
