@@ -21,6 +21,9 @@ def titleX(val):
 
 def first(val):
 	return val[0]
+
+def Section(val):
+	return val[0].title
 	
 def SpellNameFix(Name,List):
 	try:
@@ -77,6 +80,7 @@ with open(filepath,'r') as f:
 		for x in row:
 			if x:
 				SpellList.append(x.title())
+				print(x)
 
 chapters = []
 ClassSections = []
@@ -200,6 +204,7 @@ for x in chapters:
 
 TOCWClass = [epub.Link('nav.xhtml','TOC','TOC'),
 			(epub.Section('A-Z'),chapters)]
+ClassSections.sort(key = Section)
 TOCWClass.extend(ClassSections)
 
 
