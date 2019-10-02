@@ -37,6 +37,14 @@ def FileNameFix(Name):
 	return Name.replace(' ','_')+'.xhtml'
 	#return 'OEBPS/'+Name.replace(' ','_')+'.xhtml'
 	
+projectName = ''
+root = Tk()
+root.withdraw()
+root.filename =filedialog.askopenfilename( filetypes = ( ( "CSV", "*.csv"),("All files","*.*") ) )
+
+filepath = root.filename
+projectName = os.path.splitext(os.path.basename(root.filename))[0]
+
 
 #if not os.path.exists('spell_full.csv'):
 #		urllib.request.urlretrieve('https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv', 'spell_full.csv')
@@ -56,21 +64,17 @@ book = epub.EpubBook()
 uuidNum = uuid.uuid4()
 book.IDENTIFIER_ID = 'PrimaryID'
 book.set_identifier(str(uuidNum))
-book.set_title('SpellBookTest')
+book.set_title(projectName)
 book.set_language('en')
 
-book.add_author('EpubSpellBook')
+book.add_author('Charely6')
 book.FOLDER_NAME='OEBPS'
 book.EPUB_VERSION=2
 book.add_metadata('DC', 'publisher', 'PathfinderArchivist')
 book.add_metadata('DC', 'date', str(datetime.date.today()))
 #book.add_metadata('DC', 'identifier id =\"PrimaryID\"', str(uuidNum))
 
-root = Tk()
-root.withdraw()
-root.filename =filedialog.askopenfilename( filetypes = ( ( "CSV", "*.csv"),("All files","*.*") ) )
 
-filepath = root.filename
 
 SpellList = []
 
@@ -80,7 +84,6 @@ with open(filepath,'r') as f:
 		for x in row:
 			if x:
 				SpellList.append(x.title())
-				print(x)
 
 chapters = []
 ClassSections = []
@@ -174,7 +177,6 @@ book.add_item(default_css)
 BookList = []
 for y in SpellList:
 	x=SpellNameFix(y,list_of_spell_Names)
-	print(x)
 	BookList.append(x)
 
 for y in classes:
@@ -227,7 +229,7 @@ book.spine = ['nav']
 book.spine.extend(chapters)
 book.guide = [{"href":"nav.xhtml","title":"Table of Contents", "type":"toc"}]
 # write to the file
-epub.write_epub('test.epub', book,  {"epub3_landmark": False, "epub3_pages": False})
+epub.write_epub(projectName+'.epub', book,  {"epub3_landmark": False, "epub3_pages": False})
 
 
 
