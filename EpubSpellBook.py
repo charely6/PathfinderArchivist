@@ -2,16 +2,16 @@ import requests
 import urllib.request
 import locale
 from ebooklib import epub
+from ebooklib import plugins
 from dialog import Dialog
 import sys, os
 import math
-#import tkinter 
-#from tkinter import *
 from tkinter import Tk
 from tkinter import filedialog
 import csv
 from fuzzywuzzy import process
 import pandas as pd
+import uuid
 
 def title(val):
 	return val.title
@@ -28,10 +28,13 @@ def SpellNameFix(Name,List):
 	except:
 		x=process.extractOne(Name,List)
 		return x[0]
+	
+def FileNameFix(Name):
+	return 'OEBPS/'+Name.replace(' ','_')+'.xhtml'
+	
 
-# use creds to create a client to interact with the Google Drive API
-if not os.path.exists('spell_full.csv'):
-		urllib.request.urlretrieve('https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv', 'spell_full.csv')
+#if not os.path.exists('spell_full.csv'):
+#		urllib.request.urlretrieve('https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv', 'spell_full.csv')
 		
 #pathtoCsv = r'https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv'
 pathtoCsv = r'spell_full.csv'
@@ -44,12 +47,16 @@ list_of_spell_Names = df.loc[:,'name'].values.tolist()
 book = epub.EpubBook()
 
 # set metadata
-book.set_identifier('id123456')
+
+uuidNum = uuid.uuid4()
+
+book.set_identifier(str(uuidNum))
 book.set_title('SpellBookTest')
 book.set_language('en')
 
 book.add_author('EpubSpellBook')
-
+#book.FOLDER_NAME=
+book.EPUB_VERSION=2.0
 
 root = Tk()
 root.withdraw()
@@ -75,63 +82,6 @@ classes = ['Sorcerer', 'Wizard', 'Cleric',
 		   'Oracle', 'Antipaladin', 'Magus', 
 		   'Adept']
 
- 
-default_css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css", content=style)
-book.add_item(default_css)
-BookList = []
-for y in SpellList:
-	x=SpellNameFix(y,list_of_spell_Names)
-	BookList.append(x)
-
-for y in classes:
-	ClassSections.append((epub.Section(y),[]))
-
-for currentSpell in list_of_rows:
-	if currentSpell[0]=="name":
-		continue
-	if currentSpell[0] not in BookList:
-		continue
-	cl = epub.EpubHtml(title = currentSpell[0], file_name=x[0]+'.xhtml', lang='en')
-	cl.content=currentSpell[20]
-	cl.add_item(default_css)
-	for idx, y in enumerate(ClassSections):
-		if not math.isnan(currentSpell[idx+26]):
-			y[1].append(epub.Link(currentSpell[0]+'.xhtml',currentSpell[0],currentSpell[0]))
-			
-	chapters.append(cl)
-
-chapters.sort(key = title)
-
-for x in chapters:
-	book.add_item(x)
-
-TOCWClass = [epub.Link('nav.xhtml','TOC','TOC'),
-			(epub.Section('A-Z'),chapters)]
-TOCWClass.extend(ClassSections)
-
-
-book.toc = TOCWClass
-#book.toc.extend(ClassSections)
-			
-
-
-# add default NCX and Nav file
-book.add_item(epub.EpubNcx())
-book.add_item(epub.EpubNav())
-
-
-nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
-
-# add CSS file
-book.add_item(nav_css)
-
-# basic spine
-book.spine = ['nav']
-book.spine.extend(chapters)
-# write to the file
-epub.write_epub('test.epub', book, {})
-
-
 style = '''
 /* Please include proper OGL citation if redistributed. */
 /* OGL Section 15 Notice at end of file. */
@@ -156,7 +106,6 @@ h1 {
 margin-bottom: 0;
 margin-top: 0;
 text-indent: -20px;
-font-size: 22;
 font-family: arial;
 }
 
@@ -164,7 +113,6 @@ h2 {
 margin-bottom: 0;
 margin-top: 0;
 text-indent: -20px;
-font-size: 22;
 font-family: arial;
 text-align:left;
 }
@@ -174,7 +122,6 @@ margin-bottom: 0;
 margin-top: 0;
 margin-left: -20px;
 text-indent: 0px;
-font-size: 16;
 font-weight: normal;
 font-family: arial;
 }
@@ -185,26 +132,6 @@ margin-top: 0px;
 margin-left: -20px;
 text-indent: 0px;
 text-align: justify;
-font-size: 16;
-font-weight: normal;
-font-family: arial;
-}
-
-h5 {
-margin-bottom: 0;
-margin-top: 0;
-text-indent: -20px;
-font-size: 16;
-font-weight: normal;
-font-family: arial;
-}
-
-h6 {
-margin-bottom: 0;
-margin-top: 0;
-margin-left: 30px;
-text-indent: -20px;
-font-size: 16;
 font-weight: normal;
 font-family: arial;
 }
@@ -226,21 +153,72 @@ text-indent: 10px;
 float: left;
 text-align:left;
 font-weight: bold;
-font-size: 22;
 font-family: arial;
 color: white;
 }
 
-p.alignright {
-float: right;
-text-align:right;
-font-weight: bold;
-font-size: 22;
-font-family: arial;
-color: white;
-}
-
-/* Paizo Stat Block Database. Copyright 2011 Mike Chopswil, d20pfsrd.com */
 
 
 '''
+default_css = epub.EpubItem(uid="style_default", file_name="default.css", media_type="text/css", content=style)
+book.add_item(default_css)
+BookList = []
+for y in SpellList:
+	x=SpellNameFix(y,list_of_spell_Names)
+	print(x)
+	BookList.append(x)
+
+for y in classes:
+	ClassSections.append((epub.Section(y),[]))
+#create files for each spell and add them to the class sections for the class lists they are on
+	
+for currentSpell in list_of_rows:
+	if currentSpell[0]=="name":
+		continue
+	if currentSpell[0] not in BookList:
+		continue
+	cl = epub.EpubHtml(title = currentSpell[0], file_name=FileNameFix(currentSpell[0]), lang='en')
+	cl.content=currentSpell[20].replace('h5','p')
+	cl.add_item(default_css)
+	for idx, y in enumerate(ClassSections):
+		if not math.isnan(currentSpell[idx+26]):
+			y[1].append(epub.Link(FileNameFix(currentSpell[0]),currentSpell[0],currentSpell[0].replace(' ','_')+'_'+classes[idx]))
+	chapters.append(cl)
+
+chapters.sort(key = title)
+
+ClassSections = [s for s in ClassSections if len(s[1]) !=0]
+
+
+for x in chapters:
+	book.add_item(x)
+
+TOCWClass = [epub.Link('nav.xhtml','TOC','TOC'),
+			(epub.Section('A-Z'),chapters)]
+#TOCWClass.extend(ClassSections)
+
+
+book.toc = TOCWClass
+#book.toc.extend(ClassSections)
+			
+
+
+# add default NCX and Nav file
+book.add_item(epub.EpubNcx())
+book.add_item(epub.EpubNav())
+
+
+nav_css = epub.EpubItem(uid="style_nav", file_name="nav.css", media_type="text/css", content=style)
+
+# add CSS file
+book.add_item(nav_css)
+
+# basic spine
+book.spine = ['nav']
+book.spine.extend(chapters)
+book.guide = [{"href":"nav.xhtml","title":"Table of Contents", "type":"toc"}]
+# write to the file
+epub.write_epub('test.epub', book, {})
+
+
+
