@@ -12,6 +12,7 @@ import csv
 from fuzzywuzzy import process
 import pandas as pd
 import uuid
+import datetime
 
 def title(val):
 	return val.title
@@ -30,7 +31,8 @@ def SpellNameFix(Name,List):
 		return x[0]
 	
 def FileNameFix(Name):
-	return 'OEBPS/'+Name.replace(' ','_')+'.xhtml'
+	return Name.replace(' ','_')+'.xhtml'
+	#return 'OEBPS/'+Name.replace(' ','_')+'.xhtml'
 	
 
 #if not os.path.exists('spell_full.csv'):
@@ -49,14 +51,17 @@ book = epub.EpubBook()
 # set metadata
 
 uuidNum = uuid.uuid4()
-
+book.IDENTIFIER_ID = 'PrimaryID'
 book.set_identifier(str(uuidNum))
 book.set_title('SpellBookTest')
 book.set_language('en')
 
 book.add_author('EpubSpellBook')
-#book.FOLDER_NAME=
-book.EPUB_VERSION=2.0
+book.FOLDER_NAME='OEBPS'
+book.EPUB_VERSION=2
+book.add_metadata('DC', 'publisher', 'PathfinderArchivist')
+book.add_metadata('DC', 'date', str(datetime.date.today()))
+#book.add_metadata('DC', 'identifier id =\"PrimaryID\"', str(uuidNum))
 
 root = Tk()
 root.withdraw()
@@ -195,11 +200,10 @@ for x in chapters:
 
 TOCWClass = [epub.Link('nav.xhtml','TOC','TOC'),
 			(epub.Section('A-Z'),chapters)]
-#TOCWClass.extend(ClassSections)
+TOCWClass.extend(ClassSections)
 
 
 book.toc = TOCWClass
-#book.toc.extend(ClassSections)
 			
 
 
@@ -211,14 +215,14 @@ book.add_item(epub.EpubNav())
 nav_css = epub.EpubItem(uid="style_nav", file_name="nav.css", media_type="text/css", content=style)
 
 # add CSS file
-book.add_item(nav_css)
+#book.add_item(nav_css)
 
 # basic spine
 book.spine = ['nav']
 book.spine.extend(chapters)
 book.guide = [{"href":"nav.xhtml","title":"Table of Contents", "type":"toc"}]
 # write to the file
-epub.write_epub('test.epub', book, {})
+epub.write_epub('test.epub', book,  {"epub3_landmark": False, "epub3_pages": False})
 
 
 
