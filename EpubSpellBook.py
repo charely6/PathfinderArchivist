@@ -1,20 +1,18 @@
 import requests
-import pprint
+import urllib.request
 import locale
 from ebooklib import epub
+from ebooklib import plugins
 from dialog import Dialog
 import sys, os
-import tkinter as tk
+import math
+from tkinter import Tk
 from tkinter import filedialog
-from tkinter import *
-from oauth2client.service_account import ServiceAccountCredentials
 import csv
-from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
-import timeit
-import pprint
-from io import StringIO
 import pandas as pd
+import uuid
+import datetime
 
 def title(val):
 	return val.title
@@ -23,19 +21,28 @@ def titleX(val):
 
 def first(val):
 	return val[0]
+
+def Section(val):
+	return val[0].title
 	
 def SpellNameFix(Name,List):
 	try:
-		y = List.index(Name)
+		List.index(Name)
 		return Name
 	except:
-		print('======'+Name+'======')
 		x=process.extractOne(Name,List)
 		return x[0]
+	
+def FileNameFix(Name):
+	return Name.replace(' ','_')+'.xhtml'
+	#return 'OEBPS/'+Name.replace(' ','_')+'.xhtml'
+	
 
-# use creds to create a client to interact with the Google Drive API
-
-pathtoCsv = r'https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv'
+#if not os.path.exists('spell_full.csv'):
+#		urllib.request.urlretrieve('https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv', 'spell_full.csv')
+		
+#pathtoCsv = r'https://docs.google.com/spreadsheets/d/1cuwb3QSvWDD7GG5McdvyyRBpqycYuKMRsXgyrvxvLFI/pub?output=csv'
+pathtoCsv = r'spell_full.csv'
 df = pd.read_csv(pathtoCsv, encoding = 'utf8')
 
 list_of_rows = df.values.tolist()
@@ -45,20 +52,25 @@ list_of_spell_Names = df.loc[:,'name'].values.tolist()
 book = epub.EpubBook()
 
 # set metadata
-book.set_identifier('id123456')
+
+uuidNum = uuid.uuid4()
+book.IDENTIFIER_ID = 'PrimaryID'
+book.set_identifier(str(uuidNum))
 book.set_title('SpellBookTest')
 book.set_language('en')
 
 book.add_author('EpubSpellBook')
-
+book.FOLDER_NAME='OEBPS'
+book.EPUB_VERSION=2
+book.add_metadata('DC', 'publisher', 'PathfinderArchivist')
+book.add_metadata('DC', 'date', str(datetime.date.today()))
+#book.add_metadata('DC', 'identifier id =\"PrimaryID\"', str(uuidNum))
 
 root = Tk()
 root.withdraw()
+root.filename =filedialog.askopenfilename( filetypes = ( ( "CSV", "*.csv"),("All files","*.*") ) )
 
-filepath =filedialog.askopenfilename( filetypes = ( ( "CSV", "*.csv"),("All files","*.*") ) )
-
-
-print(filepath)
+filepath = root.filename
 
 SpellList = []
 
@@ -68,13 +80,16 @@ with open(filepath,'r') as f:
 		for x in row:
 			if x:
 				SpellList.append(x.title())
-for spell in SpellList:
-	print(spell.title())
+				print(x)
+
 chapters = []
 ClassSections = []
-classes = ['Sorcerer', 'Wizard', 'Cleric', 'Druid', 'Ranger', 'Bard', 'Paladin', 'Alchemist', 'Summoner', 'Witch', 'Inquisitor', 'Oracle', 'Antipaladin', 'Magus', 'adept']
-
-# define CSS style
+classes = ['Sorcerer', 'Wizard', 'Cleric', 
+		   'Druid', 'Ranger', 'Bard', 
+		   'Paladin', 'Alchemist', 
+		   'Summoner', 'Witch', 'Inquisitor', 
+		   'Oracle', 'Antipaladin', 'Magus', 
+		   'Adept']
 
 style = '''
 /* Please include proper OGL citation if redistributed. */
@@ -100,7 +115,6 @@ h1 {
 margin-bottom: 0;
 margin-top: 0;
 text-indent: -20px;
-font-size: 22;
 font-family: arial;
 }
 
@@ -108,7 +122,6 @@ h2 {
 margin-bottom: 0;
 margin-top: 0;
 text-indent: -20px;
-font-size: 22;
 font-family: arial;
 text-align:left;
 }
@@ -118,7 +131,6 @@ margin-bottom: 0;
 margin-top: 0;
 margin-left: -20px;
 text-indent: 0px;
-font-size: 16;
 font-weight: normal;
 font-family: arial;
 }
@@ -129,26 +141,6 @@ margin-top: 0px;
 margin-left: -20px;
 text-indent: 0px;
 text-align: justify;
-font-size: 16;
-font-weight: normal;
-font-family: arial;
-}
-
-h5 {
-margin-bottom: 0;
-margin-top: 0;
-text-indent: -20px;
-font-size: 16;
-font-weight: normal;
-font-family: arial;
-}
-
-h6 {
-margin-bottom: 0;
-margin-top: 0;
-margin-left: 30px;
-text-indent: -20px;
-font-size: 16;
 font-weight: normal;
 font-family: arial;
 }
@@ -170,104 +162,72 @@ text-indent: 10px;
 float: left;
 text-align:left;
 font-weight: bold;
-font-size: 22;
 font-family: arial;
 color: white;
 }
 
-p.alignright {
-float: right;
-text-align:right;
-font-weight: bold;
-font-size: 22;
-font-family: arial;
-color: white;
-}
-
-/* Paizo Stat Block Database. Copyright 2011 Mike Chopswil, d20pfsrd.com */
 
 
-'''   
-#test
-
-default_css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css", content=style)
+'''
+default_css = epub.EpubItem(uid="style_default", file_name="default.css", media_type="text/css", content=style)
 book.add_item(default_css)
-print("test")
 BookList = []
 for y in SpellList:
 	x=SpellNameFix(y,list_of_spell_Names)
-	#x=process.extractOne(y,list_of_spell_Names)
+	print(x)
 	BookList.append(x)
 
 for y in classes:
 	ClassSections.append((epub.Section(y),[]))
-print(ClassSections)
-print("================")
-for x in list_of_rows:
-	if x[0]=="name":
+#create files for each spell and add them to the class sections for the class lists they are on
+	
+for currentSpell in list_of_rows:
+	if currentSpell[0]=="name":
 		continue
-	if x[0] not in BookList:
+	if currentSpell[0] not in BookList:
 		continue
-	cl = epub.EpubHtml(title = x[0], file_name=x[0]+'.xhtml', lang='en')
-	cl.content=x[20]
+	cl = epub.EpubHtml(title = currentSpell[0], file_name=FileNameFix(currentSpell[0]), lang='en')
+	cl.content=currentSpell[20].replace('h5','p')
 	cl.add_item(default_css)
-	#print(x[0])
 	for idx, y in enumerate(ClassSections):
-		if x[idx+26]>0:
-			y[1].append(epub.Link(x[0]+'.xhtml',x[0],x[0]))
-			
+		if not math.isnan(currentSpell[idx+26]):
+			y[1].append(epub.Link(FileNameFix(currentSpell[0]),currentSpell[0],currentSpell[0].replace(' ','_')+'_'+classes[idx]))
 	chapters.append(cl)
-ClassSections = [x for x in ClassSections if  x[1]]
-for x in ClassSections:
-	print('|'+x[0].title+'|')
-	for y in x[1]:
-		print(y.title,end = "  ")
-	print()
 
 chapters.sort(key = title)
+
+ClassSections = [s for s in ClassSections if len(s[1]) !=0]
+
 
 for x in chapters:
 	book.add_item(x)
 
-#TOCList.append(chapters)
-#print(TOCList)
-#print('Class Sections')
-#for x in ClassSections:
-	#print(x)
-print("================")
-print(ClassSections)
-print("================")
+TOCWClass = [epub.Link('nav.xhtml','TOC','TOC'),
+			(epub.Section('A-Z'),chapters)]
+ClassSections.sort(key = Section)
+TOCWClass.extend(ClassSections)
 
-book.toc = (epub.Link('nav.xhtml','TOC','TOC'),
-			(epub.Section('A-Z'),chapters))
+
+book.toc = TOCWClass
 			
-print(book.toc)
-print("================")
-x = (epub.Link('nav.xhtml','TOC','TOC'),
-			(epub.Section('A-Z'),chapters),ClassSections)
-print(x)
-#for x in ClassSections:
-#	book.toc.append(x)
- 
 
-# # define Table Of Contents
-# book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
-             # (epub.Section('Simple book'),
-             # (c1, ))
-            # )
 
 # add default NCX and Nav file
 book.add_item(epub.EpubNcx())
 book.add_item(epub.EpubNav())
 
 
-nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
+nav_css = epub.EpubItem(uid="style_nav", file_name="nav.css", media_type="text/css", content=style)
 
 # add CSS file
-book.add_item(nav_css)
+#book.add_item(nav_css)
 
 # basic spine
 book.spine = ['nav']
 book.spine.extend(chapters)
+book.guide = [{"href":"nav.xhtml","title":"Table of Contents", "type":"toc"}]
 # write to the file
-epub.write_epub('test.epub', book, {})
+epub.write_epub('test.epub', book,  {"epub3_landmark": False, "epub3_pages": False})
+
+
+
