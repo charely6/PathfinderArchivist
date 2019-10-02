@@ -7,7 +7,7 @@ Using FuzzyWuzzy allows for misspellings/variations
 to account for punctuation in spell names and the like
 
 ---
-
+Use https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/epubcheck/epubcheck-3.0.1.zip
 #TODO
 - create a multi leveled Table of Contents sorting them by Class list and level
 - add support for simple printable PDFs (starting with epub for use with nooks and kindles)
