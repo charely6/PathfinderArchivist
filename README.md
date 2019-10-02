@@ -9,10 +9,11 @@ to account for punctuation in spell names and the like
 ---
 Use https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/epubcheck/epubcheck-3.0.1.zip
 #TODO
-- create a multi leveled Table of Contents sorting them by Class list and level
-- add support for simple printable PDFs (starting with epub for use with nooks and kindles)
-- create dialog that allows search and selection of spells to be put into the book
-- add ability to drag csv file onto the file to auto execute
+[X] create a multi leveled Table of Contents sorting them by Class list and level
+[] Come up with a better multi leveled Table of Contents (with level sort)
+[] add support for simple printable PDFs (starting with epub for use with nooks and kindles)
+[] create dialog that allows search and selection of spells to be put into the book
+[] add ability to drag csv file onto the file to auto execute
 
 
 
